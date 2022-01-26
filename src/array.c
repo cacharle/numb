@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include "numb/array.h"
 
-nb_array_t *nb_array_new(size_t dim, ...)
+nb_array_t *
+nb_array_new(size_t dim, ...)
 {
     va_list ap;
 
@@ -27,18 +28,59 @@ nb_array_t *nb_array_new(size_t dim, ...)
         array->data_len *= array->shape[i];
     }
     array->data = malloc(sizeof(double) * array->data_len);
+    if (array->data == NULL)
+    {
+        free(array->shape);
+        free(array);
+    }
     va_end(ap);
     return array;
 }
 
-void nb_array_destroy(nb_array_t *array)
+void
+nb_array_destroy(nb_array_t *array)
 {
     free(array->shape);
     free(array->data);
     free(array);
 }
 
-void nb_array_print(nb_array_t *array)
+void
+nb_array_fill(nb_array_t *array, double n)
+{
+    for (size_t i = 0; i < array->data_len; i++)
+        array->data[i] = n;
+}
+
+void
+nb_array_scalar_add(nb_array_t *array, double n)
+{
+    for (size_t i = 0; i < array->data_len; i++)
+        array->data[i] += n;
+}
+void
+nb_array_scalar_sub(nb_array_t *array, double n)
+{
+    for (size_t i = 0; i < array->data_len; i++)
+        array->data[i] -= n;
+}
+
+void
+nb_array_scalar_mul(nb_array_t *array, double n)
+{
+    for (size_t i = 0; i < array->data_len; i++)
+        array->data[i] *= n;
+}
+
+void
+nb_array_scalar_div(nb_array_t *array, double n)
+{
+    for (size_t i = 0; i < array->data_len; i++)
+        array->data[i] /= n;
+}
+
+void
+nb_array_print(nb_array_t *array)
 {
     // fputc('[', stdout);
     // for (size_t i = 0; i < array->shape[0]; i++)
@@ -80,9 +122,10 @@ void nb_array_print(nb_array_t *array)
         fputc('\n', stdout);
         break;
     default:
-        fprintf(stderr, "Not implemented: printing array with dim > 2: dim=%zu\n", array->dim);
+        fprintf(stderr,
+                "Not implemented: printing array with dim > 2: dim=%zu\n",
+                array->dim);
         abort();
         break;
     }
-
 }
