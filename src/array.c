@@ -1,30 +1,29 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
 #include "numb/array.h"
 
 nb_array_t *
-nb_array_new(size_t dim, ...)
+nb_array_new(uint64_t dim, uint64_t *shape)
 {
-    va_list ap;
-
     if (dim == 0)
         return NULL;
     nb_array_t *array = malloc(sizeof(nb_array_t));
     if (array == NULL)
         return NULL;
-    array->shape = malloc(sizeof(size_t) * dim);
+    array->shape = malloc(sizeof(uint64_t) * dim);
     if (array->shape == NULL)
     {
         free(array);
         return NULL;
     }
     array->dim = dim;
-    va_start(ap, dim);
     array->data_len = 1;
-    for (size_t i = 0; i < dim; i++)
+    for (uint64_t i = 0; i < dim; i++)
     {
-        array->shape[i] = va_arg(ap, size_t);
+        array->shape[i] = shape[i];
         array->data_len *= array->shape[i];
     }
     array->data = malloc(sizeof(double) * array->data_len);
@@ -33,7 +32,21 @@ nb_array_new(size_t dim, ...)
         free(array->shape);
         free(array);
     }
-    va_end(ap);
+    return array;
+}
+
+nb_array_t *
+nb_array_newv(uint64_t dim, ...)
+{
+    uint64_t *shape = malloc(sizeof(uint64_t) * dim);
+    if (shape == NULL)
+        return NULL;
+    va_list ap;
+    va_start(ap, dim);
+    for (uint64_t i = 0; i < dim; i++)
+        shape[i] = va_arg(ap, uint64_t);
+    nb_array_t *array = nb_array_new(dim, shape);
+    free(shape);
     return array;
 }
 
@@ -48,42 +61,76 @@ nb_array_destroy(nb_array_t *array)
 void
 nb_array_fill(nb_array_t *array, double n)
 {
-    for (size_t i = 0; i < array->data_len; i++)
+    for (uint64_t i = 0; i < array->data_len; i++)
         array->data[i] = n;
 }
 
 void
 nb_array_scalar_add(nb_array_t *array, double n)
 {
-    for (size_t i = 0; i < array->data_len; i++)
+    for (uint64_t i = 0; i < array->data_len; i++)
         array->data[i] += n;
 }
 void
 nb_array_scalar_sub(nb_array_t *array, double n)
 {
-    for (size_t i = 0; i < array->data_len; i++)
+    for (uint64_t i = 0; i < array->data_len; i++)
         array->data[i] -= n;
 }
 
 void
 nb_array_scalar_mul(nb_array_t *array, double n)
 {
-    for (size_t i = 0; i < array->data_len; i++)
+    for (uint64_t i = 0; i < array->data_len; i++)
         array->data[i] *= n;
 }
 
 void
 nb_array_scalar_div(nb_array_t *array, double n)
 {
-    for (size_t i = 0; i < array->data_len; i++)
+    for (uint64_t i = 0; i < array->data_len; i++)
         array->data[i] /= n;
 }
+
+static bool
+same_shape(nb_array_t *a, nb_array_t *b)
+{
+    return a->dim == b->dim &&
+           memcmp(a->shape, b->shape, sizeof(double) * a->dim) == 0;
+}
+
+void
+nb_array_add(nb_array_t *dest, nb_array_t *src)
+{
+    if (!same_shape(dest, src))
+        abort();
+    for (uint64_t i = 0; i < dest->data_len; i++)
+        dest->data[i] += src->data[i];
+}
+
+void
+nb_array_sub(nb_array_t *dest, nb_array_t *src)
+{
+    if (!same_shape(dest, src))
+        abort();
+    for (uint64_t i = 0; i < dest->data_len; i++)
+        dest->data[i] -= src->data[i];
+}
+void
+nb_array_mul(nb_array_t *dest, nb_array_t *src)
+{
+
+
+}
+
+// void
+// nb_array_div(nb_array_t *dest, nb_array_t *src);
 
 void
 nb_array_print(nb_array_t *array)
 {
     // fputc('[', stdout);
-    // for (size_t i = 0; i < array->shape[0]; i++)
+    // for (uint64_t i = 0; i < array->shape[0]; i++)
     // {
     //     nb_array_print(nb_array_at(array, 0, -1));
     //     fputc('\n', stdout);
@@ -94,7 +141,7 @@ nb_array_print(nb_array_t *array)
     {
     case 1:
         fputc('[', stdout);
-        for (size_t i = 0; i < array->shape[0]; i++)
+        for (uint64_t i = 0; i < array->shape[0]; i++)
         {
             printf("%.2f", array->data[i]);
             if (i != array->shape[0] - 1)
@@ -105,11 +152,11 @@ nb_array_print(nb_array_t *array)
         break;
     case 2:
         fputc('[', stdout);
-        for (size_t i = 0; i < array->shape[0]; i++)
+        for (uint64_t i = 0; i < array->shape[0]; i++)
         {
             if (i != 0)
                 fputc(' ', stdout);
-            for (size_t j = 0; j < array->shape[1]; j++)
+            for (uint64_t j = 0; j < array->shape[1]; j++)
             {
                 printf("%.2f", array->data[i * array->shape[0] + j]);
                 if (j != array->shape[1] - 1)
