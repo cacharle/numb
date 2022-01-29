@@ -58,6 +58,24 @@ nb_array_destroy(nb_array_t *array)
     free(array);
 }
 
+uint64_t
+nb_array_data_len(nb_array_t *array)
+{
+    return array->data_len;
+}
+
+void
+nb_array_copy_data(double *dest, nb_array_t *array)
+{
+    memcpy(dest, array->data, array->data_len * sizeof(double));
+}
+
+void
+nb_array_load_data(nb_array_t *array, double *data)
+{
+    memcpy(array->data, data, array->data_len * sizeof(double));
+}
+
 void
 nb_array_fill(nb_array_t *array, double n)
 {

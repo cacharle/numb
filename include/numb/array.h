@@ -18,6 +18,13 @@ nb_array_newv(uint64_t dim, ...);
 void
 nb_array_destroy(nb_array_t *array);
 
+uint64_t
+nb_array_data_len(nb_array_t *array);
+void
+nb_array_copy_data(double *dest, nb_array_t *array);
+void
+nb_array_load_data(nb_array_t *array, double *data);
+
 void
 nb_array_fill(nb_array_t *array, double n);
 void
